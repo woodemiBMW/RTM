@@ -1,6 +1,11 @@
 import './meeting.css';
 import {APP_ID as appId} from '../../config';
 import Toastr from 'toastr';
+import {Canvas} from '../../renderer/canvas.js';
+import {Point} from '../../renderer/point.js';
+import {DevInfo} from '../../device/devInfo.js';
+
+var drawCanvas = {};
 
 class View {
 
@@ -196,6 +201,16 @@ class Modal {
   }
 
 }
+const canvasHtml = '<canvas id="{{id}}" width="{{width}}" height="{{height}}" style="border:1px solid #d3d3d3;width:{{width}}px;height: {{height}}px";">';
+
+function hexStr2ArrayBuffer(hexStr) {
+    var buf = new ArrayBuffer(hexStr.length/2);
+    var byteBuf = new Uint8Array(buf);
+    for (let i=0; i<hexStr.length; i+=2) {
+        byteBuf[i/2] = parseInt(hexStr.slice(i,i+2),16);
+    }
+    return buf;
+}
 
 class RTM {
   constructor (accountName) {
@@ -260,6 +275,20 @@ class RTM {
         if (senderId === accountName) {
           return;
         }
+        console.log("message:" + message);
+        //added by kuangtao
+          if(!drawCanvas[senderId]){
+            var width = 400;
+            var height = width * (DevInfo.prototype.Y_MAX/DevInfo.prototype.X_MAX);
+            var id = "canvas" + senderId;
+              var ele = document.createElement("canvas");
+              document.querySelector("#user_draw").appendChild(ele);
+              ele.outerHTML = canvasHtml.replace(/\{\{\id}\}/g, id).replace(/\{\{\width}\}/g, width).replace(/\{\{\height}\}/g, height);
+              drawCanvas[senderId] = new Canvas({canvasId: id, width:width , height: height} );
+          }
+          var enc = new TextEncoder("utf-8"); // always utf-8
+          drawCanvas[senderId].drawPoint(Point.prototype.parsePoints(hexStr2ArrayBuffer(message)));
+          return ;
         const msg = {
           userName: senderId,
           content: message
@@ -394,7 +423,33 @@ $(() => {
       location.replace('/');
     }, 1000) && Toastr[type](reason);
   })
-  rtm.client.login({uid: accountName}).then(_ => _);
+  rtm.client.login({uid: accountName}).then(() => {
+      var channelName = "2017";
+      rtm.joinChannel(channelName).then(result => {
+          let hasCurrent = $(".current").length
+          if (result === false) {
+              $("#accountNameRequired")
+              .text("Name Exists.")
+              .css({
+                  "display": "block",
+                  "color": "red"
+              })
+              return;
+          }
+          RTM.channelName = channelName;
+          View.addRoom({
+              name: RTM.channelName,
+              userName: RTM.channelName,
+              type,
+              className: hasCurrent ? '' : 'current'
+          })
+          modal.toggleClass('modal-open');
+          $("#session").text($(".current").data().name)
+      }).catch(err => {
+          console.log("[RTM-DEMO] error", err);
+          return err;
+      })
+  });
 
   RTM.channelName = '';
   $('#message').keypress(function (e) {
