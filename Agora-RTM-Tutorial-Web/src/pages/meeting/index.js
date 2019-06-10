@@ -276,18 +276,20 @@ class RTM {
           return;
         }
         console.log("message:" + message);
+        var msgData = JSON.parse(message);
+          var collaborator = msgData.collaborator;
+          var points = msgData.points;
         //added by kuangtao
-          if(!drawCanvas[senderId]){
+          if(!drawCanvas[collaborator]){
             var width = 400;
             var height = width * (DevInfo.prototype.Y_MAX/DevInfo.prototype.X_MAX);
-            var id = "canvas" + senderId;
+            var id = "canvas" + collaborator;
               var ele = document.createElement("canvas");
               document.querySelector("#user_draw").appendChild(ele);
               ele.outerHTML = canvasHtml.replace(/\{\{\id}\}/g, id).replace(/\{\{\width}\}/g, width).replace(/\{\{\height}\}/g, height);
-              drawCanvas[senderId] = new Canvas({canvasId: id, width:width , height: height} );
+              drawCanvas[collaborator] = new Canvas({canvasId: id, width:width , height: height} );
           }
-          var enc = new TextEncoder("utf-8"); // always utf-8
-          drawCanvas[senderId].drawPoint(Point.prototype.parsePoints(hexStr2ArrayBuffer(message)));
+          drawCanvas[collaborator].drawPoint(Point.prototype.parsePoints(hexStr2ArrayBuffer(points)));
           return ;
         const msg = {
           userName: senderId,
