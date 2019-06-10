@@ -15,4 +15,3 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw*
-src/assets/rtm.min.js
