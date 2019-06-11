@@ -405,9 +405,19 @@ class MeetingPage {
   }
 }
 
+function funcGetParameterFromUrl( name, url ) {
+    if (!url) url = location.href
+    name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+    var regexS = "[\\?&]"+name+"=([^&#]*)";
+    var regex = new RegExp( regexS );
+    var results = regex.exec( url );
+    return results == null ? null : results[1];
+}
+var roomId;
 $(() => {
   View.textarea = false;
-  const accountName = location.href.split("?")[1].split("=")[1];
+    const accountName = funcGetParameterFromUrl("account");
+    roomId =  funcGetParameterFromUrl("roomid");
 
   let rtm = new RTM(accountName);
   rtm.client.on("ConnectionStateChanged", (newState, reason) => {
@@ -426,7 +436,7 @@ $(() => {
     }, 1000) && Toastr[type](reason);
   })
   rtm.client.login({uid: accountName}).then(() => {
-      var channelName = "2017";
+      var channelName = roomId;
       rtm.joinChannel(channelName).then(result => {
           let hasCurrent = $(".current").length
           if (result === false) {
